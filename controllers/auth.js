@@ -13,27 +13,40 @@ const signToken = id => {
   });
 };
 
-exports.signup = catchAsync(async (req, res, next) => {
-  // const newUser = await User.create({
-  //   name: req.body.name,
-  //   email: req.body.email,
-  //   password: req.body.password,
-  //   passwordConfirm: req.body.passwordConfirm
-  // });
-
-  const newUser = await User.create(req.body);
-
-  const token = signToken(newUser._id);
-  res.status(201).json({
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 3600 * 1000
+    ),
+    httpOnly: true
+  };
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  res.cookie('jwt', token, cookieOptions);
+  user.password = undefined;
+  res.status(statusCode).json({
     status: 'success',
     token,
     data: {
-      user: newUser
+      user: user
     }
   });
+};
+
+exports.signup = catchAsync(async (req, res, next) => {
+  const newUser = await User.create({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
+    passwordConfirm: req.body.passwordConfirm
+  });
+
+  // const newUser = await User.create(req.body);
+  createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
+  // implement the wait for 1 hour after 10 login failed attempts...
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -46,12 +59,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', 401));
   }
 
-  const token = signToken(user._id);
-
-  res.status(200).json({
-    status: 'success',
-    token
-  });
+  createSendToken(user, 200, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -158,10 +166,35 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   user.passwordResetExpires = undefined;
   await user.save();
 
-  const token = signToken(user._id);
+  createSendToken(user, 200, res);
+});
 
-  res.status(200).json({
-    status: 'success',
-    token
-  });
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  const { currentPassword, newPassword, newPasswordConfirm } = req.body;
+  const foundUser = await User.findOne({ _id: req.user._id }).select(
+    '+password'
+  );
+  if (!foundUser) {
+    return next(
+      new AppError(
+        'You need to be logged in in order to perform this action',
+        401
+      )
+    );
+  }
+  const isMatch = await foundUser.correctPassword(
+    currentPassword,
+    foundUser.password
+  );
+  if (!isMatch) {
+    return next(
+      new AppError('Password do not match with previous password', 400)
+    );
+  }
+
+  foundUser.password = newPassword;
+  foundUser.passwordConfirm = newPasswordConfirm;
+  await foundUser.save();
+
+  createSendToken(foundUser, 200, res);
 });
