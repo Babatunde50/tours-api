@@ -13,7 +13,7 @@ const signToken = id => {
   });
 };
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = (user, statusCode, req, res) => {
   const token = signToken(user._id);
   const cookieOptions = {
     expires: new Date(
@@ -21,7 +21,8 @@ const createSendToken = (user, statusCode, res) => {
     ),
     httpOnly: true
   };
-  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  if (req.secure || req.headers('x-forwarded-proto'))
+    cookieOptions.secure = true;
   res.cookie('jwt', token, cookieOptions);
   user.password = undefined;
   res.status(statusCode).json({
@@ -42,7 +43,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
   const url = `${req.protocol}://${req.get('host')}/me`;
   await new Email(newUser, url).sendWelcome();
-  createSendToken(newUser, 201, res);
+  createSendToken(newUser, 201, req, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
