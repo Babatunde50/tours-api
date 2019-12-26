@@ -7,11 +7,14 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 
 const AppError = require('./utils/appErrors');
 const tourRoutes = require('./routes/tour');
 const userRoutes = require('./routes/user');
+const viewsRoutes = require('./routes/views');
 const reviewRoutes = require('./routes/review');
+const bookingRoutes = require('./routes/booking');
 const globalErrorHandler = require('./controllers/error');
 
 const app = express();
@@ -22,6 +25,8 @@ app.set('views', path.join(__dirname, 'views'));
 // middlewares
 app.use(helmet());
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(mongoSanitize());
 app.use(xss());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -46,16 +51,11 @@ app.use(
   })
 );
 
-app.get('/', (req, res) => {
-  res.status(200).render('base', {
-    tour: 'Forest',
-    user: 'Tunde'
-  });
-});
-
+app.use('/', viewsRoutes);
 app.use('/api/v1/tours', tourRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/bookings', bookingRoutes);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
