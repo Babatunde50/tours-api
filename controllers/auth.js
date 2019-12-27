@@ -21,7 +21,7 @@ const createSendToken = (user, statusCode, req, res) => {
     ),
     httpOnly: true
   };
-  if (req.secure || req.headers('x-forwarded-proto'))
+  if (req.secure || req.header('x-forwarded-proto'))
     cookieOptions.secure = true;
   res.cookie('jwt', token, cookieOptions);
   user.password = undefined;
@@ -60,7 +60,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', 401));
   }
 
-  createSendToken(user, 200, res);
+  createSendToken(user, 200, req, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -219,7 +219,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   foundUser.passwordConfirm = newPasswordConfirm;
   await foundUser.save();
 
-  createSendToken(foundUser, 200, res);
+  createSendToken(foundUser, 200, req, res);
 });
 
 exports.logout = (req, res) => {
