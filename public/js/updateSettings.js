@@ -1,0 +1,22 @@
+import axios from 'axios';
+import { showAlert } from './alerts';
+
+export const updateSettings = async (data, type) => {
+  try {
+    console.log(data);
+    const url =
+      type === 'password'
+        ? '/api/v1/users/update-password'
+        : '/api/v1/users/update-me';
+    const res = await axios({
+      method: 'PATCH',
+      url: url,
+      data: data
+    });
+    if (res.data.status === 'success') {
+      showAlert('success', `${type.toUpperCase()} updated successfully`);
+    }
+  } catch (err) {
+    showAlert('error', err.response.data.message);
+  }
+};

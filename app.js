@@ -18,6 +18,7 @@ const viewsRoutes = require('./routes/views');
 const reviewRoutes = require('./routes/review');
 const bookingRoutes = require('./routes/booking');
 const globalErrorHandler = require('./controllers/error');
+const bookingController = require('./controllers/booking');
 
 const app = express();
 
@@ -29,6 +30,15 @@ app.use(cors());
 app.options('*', cors());
 // middlewares
 app.use(helmet());
+
+app.post(
+  '/webhook-checkout',
+  express.raw({
+    type: 'application/json'
+  }),
+  bookingController.webhookCheckout
+);
+
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
