@@ -12,7 +12,8 @@ const {
   deleteMe,
   getMe,
   uploadUserPhoto,
-  resizeUserPhoto
+  resizeUserPhoto,
+  getUserBookings
 } = require('../controllers/user');
 
 const {
@@ -35,6 +36,7 @@ router.patch('/reset-password/:token', resetPassword);
 
 router.use(protect);
 
+router.get('/:id/bookings', getUserBookings);
 router.patch('/update-password', updatePassword);
 
 router.get('/me', getMe, getUser);

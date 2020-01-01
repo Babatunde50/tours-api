@@ -2,6 +2,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 
 const User = require('../models/user');
+const Booking = require('../models/bookings');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appErrors');
 const factory = require('./handlerFactory');
@@ -45,6 +46,17 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
     .toFile(`public/img/users/${req.file.filename}`);
 
   next();
+});
+
+exports.getUserBookings = catchAsync(async (req, res, next) => {
+  const bookings = await Booking.find({ user: req.user._id });
+  res.status(200).json({
+    status: 'success',
+    results: bookings.length,
+    data: {
+      bookings
+    }
+  });
 });
 
 const filterObj = (obj, ...allowedFields) => {

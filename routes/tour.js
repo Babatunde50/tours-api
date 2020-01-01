@@ -12,7 +12,8 @@ const {
   getTourWithin,
   getDistances,
   uploadTourImages,
-  resizeTourImages
+  resizeTourImages,
+  getTourBookings
 } = require('../controllers/tour');
 const { protect, restrictTo } = require('../controllers/auth');
 // const { createReview } = require('../controllers/review');
@@ -51,5 +52,7 @@ router
     updateTour
   )
   .delete(protect, restrictTo('admin', 'lead-guide'), deleteTour);
+
+router.get('/:id/bookings', protect, getTourBookings);
 
 module.exports = router;

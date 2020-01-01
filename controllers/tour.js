@@ -3,6 +3,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 
 const Tour = require('../models/tours');
+const Booking = require('../models/bookings');
 // const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appErrors');
@@ -71,6 +72,18 @@ exports.getTour = factory.getOne(Tour, { path: 'reviews' });
 
 exports.updateTour = factory.updateOne(Tour);
 exports.deleteTour = factory.deleteOne(Tour);
+
+exports.getTourBookings = catchAsync(async (req, res, next) => {
+  const tourId = req.params.id;
+  const bookings = await Booking.find({ tour: tourId });
+  res.status(200).json({
+    status: 'success',
+    results: bookings.length,
+    data: {
+      bookings
+    }
+  });
+});
 
 exports.getTourStats = catchAsync(async (req, res, next) => {
   const stats = await Tour.aggregate([
